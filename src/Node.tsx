@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from 'preact/hooks';
+import { useRef, useEffect, useState } from 'preact/hooks';
 import { styled } from 'goober';
+import { useKeyboardEvent } from '@react-hookz/web';
+
 import Nodes from './Nodes';
 import useHover from './useHover';
-import Textarea from './Textarea';
 import Editable from './Editable';
-import { useKeyboardEvent } from '@react-hookz/web';
+import { ancestorMatchingPredicate } from './utils';
 
 const StyledNode = styled('div')`
   display: flex;
@@ -26,45 +27,24 @@ const StyledNodeContent = styled('div')`
   .node__content {
     position: relative;
     border-radius: 4px;
-    background-color: #efefef;
     margin-right: 40px;
+    ${(props) => (props.hasChildren ? 'padding-right: 1.5em;' : '')}
+
+    background-color: #efefef;
     ${(props) => (props.selected ? 'background-color: #c7ff9f;' : '')}
     ${(props) => (props.edit ? 'background-color: #d75f9f;' : '')}
-    ${(props) => (props.hasChildren ? 'padding-right: 1.5em;' : '')}
-  }
-
-  .node__content-data {
-    font-family: Arial, sans-serif;
-    font-size: 1em;
-    border: none;
-    font-weight: normal;
-    background-color: transparent;
-    color: currentColor;
-    white-space: pre-wrap;
-    padding: 0;
-    margin: 0;
-    overflow: auto;
-    outline: none;
-    min-height: 1em;
-    min-width: 4em;
-
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
-    box-shadow: none;
-
-    resize: none;
-    padding: 5px 10px;
-  }
-
-  .node__content-data--edit {
-    position: absolute;
-    inset: 0;
-
-    ${(props) => (props.hasChildren ? 'right: 1.5em;' : '')}
-  }
-
-  .node__content-data--read {
-    ${(props) => (props.edit ? 'visibility: hidden;' : '')}
+    ${({ dragTarget }) => {
+      switch (dragTarget) {
+        case 'before':
+          return 'background: linear-gradient(-180deg, rgba(0,0,0,0.40) 0%, rgba(0,0,0,0) 100%);';
+        case 'after':
+          return 'background: linear-gradient(0deg, rgba(0,0,0,0.40) 0%, rgba(0,0,0,0) 100%);';
+        case 'addChild':
+          return 'background: linear-gradient(-90deg, rgba(0,0,0,0.40) 0%, rgba(0,0,0,0) 100%);';
+        default:
+          return '';
+      }
+    }}
   }
 
   .node__plus {
@@ -83,10 +63,18 @@ const StyledNodeContent = styled('div')`
   }
 `;
 
-export default function Node({ data, open, children = [], ...rest }) {
-  const { path, onSelect, selectedPath, updateNode, setEdit, edit } = rest;
+export default function Node({
+  id: nodeId,
+  data,
+  open,
+  children = [],
+  ...rest
+}) {
+  const { path, onSelect, selectedPath, updateNode, setEdit, edit, moveNode } =
+    rest;
   const contentRef = useRef(null);
   const isHovered = useHover(contentRef);
+  const [dragTarget, setDragTarget] = useState(null);
   const hasChildren = children.length > 0;
   const isSelected = path.join('.') === selectedPath.join('.');
   const isEdited = isSelected && edit;
@@ -97,15 +85,15 @@ export default function Node({ data, open, children = [], ...rest }) {
     }
   }, [isHovered, path.join('.')]);
 
-  /*useEffect(() => {
+  useEffect(() => {
     if (isSelected) {
       contentRef.current.scrollIntoView({
         behavior: 'smooth',
-        block: 'center',
+        block: 'nearest',
         inline: 'nearest',
       });
     }
-  }, [isSelected]);*/
+  }, [isSelected]);
 
   useEffect(() => {
     if (
@@ -141,17 +129,61 @@ export default function Node({ data, open, children = [], ...rest }) {
   );
 
   const handleChange = (newValue) => {
-    //if (newValue !== null) {
     updateNode(path, (prevNode) => ({
       ...prevNode,
       data: newValue,
     }));
-    //}
   };
 
-  /*const handleBlur = (newValue) => {
-    setEdit(false);
-  };*/
+  const handleDragStart = (ev) => {
+    ev.dataTransfer.setData('text/plain', path.join('.'));
+  };
+
+  const handleDragHover = (ev) => {
+    const contentRect = contentRef.current.getBoundingClientRect();
+    const x = ev.clientX - contentRect.left;
+    const y = ev.clientY - contentRect.top;
+    if (x > (contentRect.width / 3) * 2) {
+      setDragTarget('addChild');
+    } else {
+      if (y > contentRect.height / 2) {
+        setDragTarget('after');
+      } else {
+        setDragTarget('before');
+      }
+    }
+    ev.preventDefault();
+  };
+
+  const handleDragLeave = (ev) => {
+    setDragTarget(null);
+    ev.preventDefault();
+  };
+
+  const handleDrop = (ev) => {
+    ev.preventDefault();
+    setDragTarget(null);
+    if (
+      ancestorMatchingPredicate(ev.target, (el) => el === contentRef.current)
+    ) {
+      const sourcePath = ev.dataTransfer
+        .getData('text/plain')
+        .split('.')
+        .map((t) => parseInt(t));
+      const contentRect = contentRef.current.getBoundingClientRect();
+      const x = ev.clientX - contentRect.left;
+      const y = ev.clientY - contentRect.top;
+      if (x > (contentRect.width / 3) * 2) {
+        moveNode(sourcePath, nodeId, 'addChild');
+      } else {
+        if (y > contentRect.height / 2) {
+          moveNode(sourcePath, nodeId, 'after');
+        } else {
+          moveNode(sourcePath, nodeId, 'before');
+        }
+      }
+    }
+  };
 
   return (
     <StyledNode>
@@ -166,23 +198,17 @@ export default function Node({ data, open, children = [], ...rest }) {
         selected={isSelected}
         opened={open}
         edit={isEdited}
+        dragTarget={dragTarget}
       >
-        <div class='node__content' ref={contentRef}>
-          {/*isEdited && (
-            <Textarea
-              class='node__content-data node__content-data--edit'
-              onChange={handleChange}
-              onBlur={handleBlur}
-              onClick={(ev) => ev.stopPropagation()}
-              value={data}
-            />
-          )}
-          <div
-            class='node__content-data node__content-data--read'
-            ref={contentRef}
-          >
-            {isEdited ? data + ' ' : data}
-          </div>*/}
+        <div
+          class='node__content'
+          ref={contentRef}
+          draggable
+          onDragStart={handleDragStart}
+          onDragOver={handleDragHover}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           <Editable
             value={data}
             onChange={handleChange}
@@ -192,7 +218,7 @@ export default function Node({ data, open, children = [], ...rest }) {
           {hasChildren && <div class='node__plus'></div>}
         </div>
       </StyledNodeContent>
-      {hasChildren && open ? <Nodes nodes={children} {...rest} /> : null}
+      {hasChildren && open && <Nodes nodes={children} {...rest} />}
     </StyledNode>
   );
 }

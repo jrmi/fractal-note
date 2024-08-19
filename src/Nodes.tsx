@@ -18,6 +18,9 @@ export default function Nodes({ nodes, path = [], ...rest }) {
   useEffect(() => {
     const parentRect = parentRef.current.getBoundingClientRect();
     const newLines = itemRefs.current.map((childRef) => {
+      if (!childRef) {
+        return '';
+      }
       const childRect = childRef.getBoundingClientRect();
 
       const [startX, startY] = [0, parentRect.height / 2];
@@ -41,7 +44,7 @@ export default function Nodes({ nodes, path = [], ...rest }) {
     <div ref={parentRef}>
       <StyledNodes>
         {nodes.map((node, index) => (
-          <div key={index} ref={(el) => (itemRefs.current[index] = el)}>
+          <div key={node.id} ref={(el) => (itemRefs.current[index] = el)}>
             <Node {...node} {...rest} path={[...path, index]} />
           </div>
         ))}
