@@ -5,7 +5,6 @@ import { useKeyboardEvent } from '@react-hookz/web';
 import Nodes from './Nodes';
 import useHover from './useHover';
 import Editable from './Editable';
-import { ancestorMatchingPredicate } from './utils';
 
 const StyledNode = styled('div')`
   display: flex;
@@ -25,14 +24,18 @@ const StyledNodeContent = styled('div')`
   position: relative;
 
   .node__content {
+    margin-bottom: 4px;
     position: relative;
-    border-radius: 4px;
-    margin-right: 40px;
+    border-radius: 8px;
+    margin-right: 20px;
+    border-left: 1px solid #646464;
+    /* border-right: 1px solid #646464; */
+    /* box-shadow: 0 2px 0px rgba(0, 0, 0, 0.08); */
     ${(props) => (props.hasChildren ? 'padding-right: 1.5em;' : '')}
 
-    background-color: #efefef;
+    /* background-color: #f3f3f3;*/
     ${(props) => (props.selected ? 'background-color: #c7ff9f;' : '')}
-    ${(props) => (props.edit ? 'background-color: #d75f9f;' : '')}
+    ${(props) => (props.edit ? 'background-color: #9fffe4;' : '')}
     ${({ dragTarget }) => {
       switch (dragTarget) {
         case 'before':
@@ -95,14 +98,15 @@ export default function Node({
     }
   }, [isSelected]);
 
-  /*useEffect(() => {
-    if (
-      selectedPath.length > path.length &&
-      selectedPath.join('.').startsWith(path.join('.'))
-    ) {
-      updateNode(path, (prevNode) => ({ ...prevNode, open: true }));
+  useEffect(() => {
+    if (open) {
+      contentRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest',
+      });
     }
-  }, [selectedPath.join('.')]);*/
+  }, [open]);
 
   useKeyboardEvent(
     true,
@@ -127,6 +131,13 @@ export default function Node({
     },
     [isSelected, hasChildren]
   );
+
+  const handleClick = () => {
+    updateNode(nodeId, (prevNode) => ({
+      ...prevNode,
+      open: !prevNode.open,
+    }));
+  };
 
   const handleChange = (newValue) => {
     updateNode(nodeId, (prevNode) => ({
@@ -163,21 +174,18 @@ export default function Node({
   const handleDrop = (ev) => {
     ev.preventDefault();
     setDragTarget(null);
-    if (
-      ancestorMatchingPredicate(ev.target, (el) => el === contentRef.current)
-    ) {
-      const sourceNodeId = ev.dataTransfer.getData('text/plain');
-      const contentRect = contentRef.current.getBoundingClientRect();
-      const x = ev.clientX - contentRect.left;
-      const y = ev.clientY - contentRect.top;
-      if (x > (contentRect.width / 3) * 2) {
-        moveNode(sourceNodeId, nodeId, 'addChild');
+
+    const sourceNodeId = ev.dataTransfer.getData('text/plain');
+    const contentRect = contentRef.current.getBoundingClientRect();
+    const x = ev.clientX - contentRect.left;
+    const y = ev.clientY - contentRect.top;
+    if (x > (contentRect.width / 3) * 2) {
+      moveNode(sourceNodeId, nodeId, 'addChild');
+    } else {
+      if (y > contentRect.height / 2) {
+        moveNode(sourceNodeId, nodeId, 'after');
       } else {
-        if (y > contentRect.height / 2) {
-          moveNode(sourceNodeId, nodeId, 'after');
-        } else {
-          moveNode(sourceNodeId, nodeId, 'before');
-        }
+        moveNode(sourceNodeId, nodeId, 'before');
       }
     }
   };
@@ -185,12 +193,7 @@ export default function Node({
   return (
     <StyledNode>
       <StyledNodeContent
-        onClick={() =>
-          updateNode(nodeId, (prevNode) => ({
-            ...prevNode,
-            open: !prevNode.open,
-          }))
-        }
+        onClick={handleClick}
         hasChildren={hasChildren}
         selected={isSelected}
         opened={open}

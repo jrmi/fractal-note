@@ -88,3 +88,15 @@ export function getParentNode(tree, childNodeId) {
     return null;
   }
 }
+
+export function getPreviousNextNode(tree, nodeId) {
+  const parentNode = getParentNode(tree, nodeId);
+  const childIndex = parentNode.children.findIndex(({ id }) => id === nodeId);
+  const previous =
+    childIndex === 0 ? null : parentNode.children[childIndex - 1];
+  const next =
+    childIndex === parentNode.children.length - 1
+      ? null
+      : parentNode.children[childIndex + 1];
+  return [previous, next];
+}

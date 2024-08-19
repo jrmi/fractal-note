@@ -1,0 +1,6 @@
+- Undo/redo
+- Save/Restore
+- Styling par level
+- Sauvegarder la dernière selection d'un noued pour la récupérer quand on y revient.
+- Déplacer la selection entre les noeuds
+- Markdown dans les noeuds

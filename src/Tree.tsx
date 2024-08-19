@@ -9,6 +9,7 @@ import {
   updateNodeById,
   newNode,
   getParentNode,
+  getPreviousNextNode,
 } from './utils';
 
 export default function Tree({ nodes: initialNodes }) {
@@ -109,19 +110,19 @@ export default function Tree({ nodes: initialNodes }) {
   }, []);
 
   const moveNode = useCallback(
-    async (sourceNodeId, nodeId, position) => {
-      const nodeToMove = getNodeById(nodes, sourceNodeId);
-      deleteNode(sourceNodeId);
+    async (nodeIdToMove, targetNodeId, position) => {
+      const nodeToMove = getNodeById(nodes, nodeIdToMove);
+      deleteNode(nodeIdToMove);
 
       if (position === 'after') {
-        insertNodeAfter(nodeId, nodeToMove);
+        insertNodeAfter(targetNodeId, nodeToMove);
       }
       if (position === 'before') {
-        insertNodeBefore(nodeId, nodeToMove);
+        insertNodeBefore(targetNodeId, nodeToMove);
       }
       if (position === 'addChild') {
-        addChild(nodeId, nodeToMove);
-        setNodeOpen(nodeId, true); // Open the current node
+        addChild(targetNodeId, nodeToMove);
+        setNodeOpen(targetNodeId, true); // Open the current node
       }
 
       setSelectedNodeId(nodeToMove.id);
@@ -144,46 +145,98 @@ export default function Tree({ nodes: initialNodes }) {
       let nodeToAdd, currentlySelectedIndex;
       switch (ev.key) {
         case 'ArrowRight':
-          if (selectedNode.children?.length) {
-            setNodeOpen(selectedNodeId, true);
-            onSelect(selectedNode.children[0].id);
+          if (ev.ctrlKey) {
+            const [previousNode, nextNode] = getPreviousNextNode(
+              nodes,
+              selectedNodeId
+            );
+            if (previousNode) {
+              moveNode(selectedNodeId, previousNode.id, 'addChild');
+            } else if (nextNode) {
+              moveNode(selectedNodeId, nextNode.id, 'addChild');
+            }
+          } else {
+            if (selectedNode.children?.length) {
+              setNodeOpen(selectedNodeId, true);
+              onSelect(selectedNode.children[0].id);
+            }
           }
           // TODO save last selected child to come back to it
           handled = true;
           break;
         case 'ArrowLeft':
-          onSelect(parentNode.id);
+          if (ev.ctrlKey) {
+            moveNode(selectedNodeId, parentNode.id, 'after');
+          } else {
+            onSelect(parentNode.id);
+          }
           handled = true;
           break;
         case 'ArrowDown':
           currentlySelectedIndex = parentNode.children.findIndex(
             ({ id }) => id === selectedNodeId
           );
-          if (currentlySelectedIndex < parentNode.children.length - 1) {
-            onSelect(parentNode.children[currentlySelectedIndex + 1].id);
+          if (ev.ctrlKey) {
+            if (currentlySelectedIndex < parentNode.children.length - 1) {
+              moveNode(
+                selectedNodeId,
+                parentNode.children[currentlySelectedIndex + 1].id,
+                'after'
+              );
+            }
           } else {
-            // TODO jump on next available node if any
+            if (currentlySelectedIndex < parentNode.children.length - 1) {
+              onSelect(parentNode.children[currentlySelectedIndex + 1].id);
+            } else {
+              const [, nextNode] = getPreviousNextNode(nodes, parentNode.id);
+              if (nextNode) {
+                if (nextNode.children.length > 0) {
+                  onSelect(nextNode.children[0].id);
+                  setNodeOpen(nextNode.id, true);
+                } else {
+                  onSelect(nextNode.id);
+                }
+              }
+            }
           }
           handled = true;
           break;
         case 'ArrowUp':
+          currentlySelectedIndex = parentNode.children.findIndex(
+            ({ id }) => id === selectedNodeId
+          );
           if (ev.ctrlKey) {
-            //moveNode(selectedPath,)
+            if (currentlySelectedIndex > 0) {
+              moveNode(
+                selectedNodeId,
+                parentNode.children[currentlySelectedIndex - 1].id,
+                'before'
+              );
+            }
           } else {
-            currentlySelectedIndex = parentNode.children.findIndex(
-              ({ id }) => id === selectedNodeId
-            );
             if (currentlySelectedIndex > 0) {
               onSelect(parentNode.children[currentlySelectedIndex - 1].id);
             } else {
-              // TODO jump on next previous node if any
+              const [previousNode] = getPreviousNextNode(nodes, parentNode.id);
+              if (previousNode) {
+                if (previousNode.children.length > 0) {
+                  onSelect(previousNode.children.at(-1).id);
+                  setNodeOpen(previousNode.id, true);
+                } else {
+                  onSelect(previousNode.id);
+                }
+              }
             }
           }
           handled = true;
           break;
         case 'Enter':
           nodeToAdd = newNode();
-          insertNodeAfter(selectedNodeId, nodeToAdd);
+          if (ev.shiftKey) {
+            insertNodeBefore(selectedNodeId, nodeToAdd);
+          } else {
+            insertNodeAfter(selectedNodeId, nodeToAdd);
+          }
           onSelect(nodeToAdd.id);
           setEdit(true);
 

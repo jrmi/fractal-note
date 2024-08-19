@@ -25,13 +25,13 @@ export default function Nodes({ nodes, ...rest }) {
 
       const [startX, startY] = [0, parentRect.height / 2];
       const [endX, endY] = [
-        40,
+        20,
         childRect.top + childRect.height / 2 - parentRect.top,
       ];
 
-      const controlPointX1 = startX + 20;
+      const controlPointX1 = startX + 12;
       const controlPointY1 = startY;
-      const controlPointX2 = endX - 40;
+      const controlPointX2 = endX - 30;
       const controlPointY2 = endY;
 
       return `M ${startX},${startY} C ${controlPointX1},${controlPointY1} ${controlPointX2},${controlPointY2} ${endX},${endY}`;
@@ -52,7 +52,7 @@ export default function Nodes({ nodes, ...rest }) {
           style={{
             position: 'absolute',
             top: 0,
-            left: -40,
+            left: -20,
             width: '100%',
             height: '100%',
             pointerEvents: 'none',
@@ -62,7 +62,7 @@ export default function Nodes({ nodes, ...rest }) {
             <path
               key={index}
               d={path}
-              stroke='black'
+              stroke='#646464'
               strokeWidth='1'
               fill='none'
             />

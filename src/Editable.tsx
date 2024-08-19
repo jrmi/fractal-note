@@ -1,8 +1,6 @@
-import { useState, useRef, useEffect } from 'preact/hooks';
+import { useRef } from 'preact/hooks';
 import { styled } from 'goober';
-import useHover from './useHover';
 import Textarea from './Textarea';
-import { useKeyboardEvent } from '@react-hookz/web';
 
 const Wrapper = styled('div')`
   .editable__textarea,
@@ -19,10 +17,10 @@ const Wrapper = styled('div')`
     overflow: auto;
     outline: none;
     min-height: 1em;
-    min-width: 4em;
+    min-width: 2em;
     box-shadow: none;
     resize: none;
-    padding: 5px 10px;
+    padding: 2px 8px;
   }
 
   .editable__textarea {
