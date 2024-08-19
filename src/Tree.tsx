@@ -7,36 +7,37 @@ import {
   getNodeById,
   updateNodeByPath,
   newNode,
+  getParentNode,
 } from './utils';
 import useAsyncState from './useAsyncState';
 import { nanoid } from 'nanoid';
 
 export default function Tree({ nodes: initialNodes }) {
-  const [selectedPath, setSelectedPath] = useState([]);
+  const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [edit, setEdit] = useState(false);
   const [nodes, setNodes] = useAsyncState(() => {
     const result = JSON.parse(JSON.stringify(initialNodes));
     return mapTree(result[0], (node) => ({ ...node, id: nanoid() }));
   });
 
-  const selectedNode = useMemo(
-    () => getNodeByPath(selectedPath, nodes),
-    [selectedPath.join('.'), nodes]
+  const [selectedNode, selectedPath] = useMemo(
+    () => getNodeById(nodes, selectedNodeId),
+    [selectedNodeId, nodes]
   );
 
   const parentNode = useMemo(
-    () => getNodeByPath(selectedPath.slice(0, -1), nodes),
-    [selectedPath.join('.'), nodes]
+    () => (selectedNode ? getParentNode(nodes, selectedNode) : null),
+    [selectedNodeId, nodes]
   );
 
   const onSelect = useCallback(
-    (path) => {
-      if (path.join('.') !== selectedPath.join('.')) {
+    (newNodeId) => {
+      if (newNodeId !== selectedNodeId) {
         setEdit(false);
-        setSelectedPath(path);
+        setSelectedNodeId(newNodeId);
       }
     },
-    [selectedPath]
+    [selectedNodeId]
   );
 
   const updateNode = useCallback((path, callback) => {
@@ -98,7 +99,7 @@ export default function Tree({ nodes: initialNodes }) {
     async (sourcePath, nodeId, position) => {
       const nodeToMove = getNodeByPath(sourcePath, nodes);
       let newNodes = await deleteNode(sourcePath);
-      setSelectedPath([]);
+      setSelectedNodeId(null);
 
       const [, destPath] = getNodeById(newNodes, nodeId);
 
@@ -113,9 +114,7 @@ export default function Tree({ nodes: initialNodes }) {
         setNodeOpen(destPath, true); // Open the current node
       }
 
-      const [, movedNodePath] = getNodeById(newNodes, nodeToMove.id);
-
-      setSelectedPath(movedNodePath);
+      setSelectedNodeId(nodeToMove.id);
     },
     [
       deleteNode,
@@ -123,7 +122,7 @@ export default function Tree({ nodes: initialNodes }) {
       insertNodeBefore,
       addChild,
       nodes,
-      setSelectedPath,
+      setSelectedNodeId,
     ]
   );
 
@@ -131,22 +130,25 @@ export default function Tree({ nodes: initialNodes }) {
     true,
     async (ev) => {
       let handled = false;
-      let nodeToAdd, newNodes;
+      let nodeToAdd, newNodes, currentlySelectedIndex;
       switch (ev.key) {
         case 'ArrowRight':
-          if (selectedNode.children) {
-            onSelect([...selectedPath, 0]);
+          if (selectedNode.children?.length) {
+            onSelect(selectedNode.children[0].id);
           }
           // TODO save last selected child to come back to it
           handled = true;
           break;
         case 'ArrowLeft':
-          onSelect(selectedPath.slice(0, -1));
+          onSelect(parentNode.id);
           handled = true;
           break;
         case 'ArrowDown':
-          if (selectedPath.at(-1) < parentNode.children.length - 1) {
-            onSelect(selectedPath.with(-1, selectedPath.at(-1) + 1));
+          currentlySelectedIndex = parentNode.children.findIndex(
+            ({ id }) => id === selectedNodeId
+          );
+          if (currentlySelectedIndex < parentNode.children.length - 1) {
+            onSelect(parentNode.children[currentlySelectedIndex + 1].id);
           } else {
             // TODO jump on next available node if any
           }
@@ -156,8 +158,11 @@ export default function Tree({ nodes: initialNodes }) {
           if (ev.ctrlKey) {
             //moveNode(selectedPath,)
           } else {
-            if (selectedPath.at(-1) > 0) {
-              onSelect(selectedPath.with(-1, selectedPath.at(-1) - 1));
+            currentlySelectedIndex = parentNode.children.findIndex(
+              ({ id }) => id === selectedNodeId
+            );
+            if (currentlySelectedIndex > 0) {
+              onSelect(parentNode.children[currentlySelectedIndex - 1].id);
             } else {
               // TODO jump on next previous node if any
             }
@@ -167,8 +172,7 @@ export default function Tree({ nodes: initialNodes }) {
         case 'Enter':
           nodeToAdd = newNode();
           newNodes = await insertNodeAfter(selectedPath, nodeToAdd);
-          const [, appendedNodePath] = getNodeById(newNodes, nodeToAdd.id);
-          setSelectedPath(appendedNodePath);
+          onSelect(nodeToAdd.id);
           setEdit(true);
 
           handled = true;
@@ -179,20 +183,22 @@ export default function Tree({ nodes: initialNodes }) {
           const [, insertedNodePath] = getNodeById(newNodes, nodeToAdd.id);
 
           setNodeOpen(selectedPath, true); // Open the current node
-          setSelectedPath(insertedNodePath);
+          onSelect(nodeToAdd.id);
           setEdit(true);
 
           handled = true;
           break;
 
         case 'Delete':
+          currentlySelectedIndex = parentNode.children.findIndex(
+            ({ id }) => id === selectedNodeId
+          );
           newNodes = await deleteNode(selectedPath);
 
-          const removedIndex = selectedPath.at(-1);
-          if (removedIndex > 0) {
-            setSelectedPath([...selectedPath.slice(0, -1), removedIndex - 1]);
+          if (currentlySelectedIndex > 0) {
+            onSelect(parentNode.children[currentlySelectedIndex - 1].id);
           } else {
-            setSelectedPath(selectedPath.slice(0, -1));
+            onSelect(parentNode.id);
           }
           setEdit(false);
 
@@ -227,6 +233,7 @@ export default function Tree({ nodes: initialNodes }) {
       nodes={nodes.children}
       onSelect={onSelect}
       selectedPath={selectedPath}
+      selectedNodeId={selectedNodeId}
       updateNode={updateNode}
       edit={edit}
       setEdit={setEdit}

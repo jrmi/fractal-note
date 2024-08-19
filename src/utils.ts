@@ -43,7 +43,7 @@ export function findNode(node, predicate, path = []) {
     }
   }
 
-  return [null, null];
+  return [null, []];
 }
 
 export function getNodeById(node, nodeId) {
@@ -72,3 +72,23 @@ export const updateNodeByPath = (node, currentPath, callback) => {
 export const newNode = () => {
   return { data: '', children: [], id: nanoid() };
 };
+
+export function getParentNode(currentNode, targetNode) {
+  if (currentNode.id === targetNode.id) {
+    return currentNode;
+  } else {
+    if (currentNode.children) {
+      for (let child of currentNode.children) {
+        if (child.id === targetNode.id) {
+          return currentNode;
+        } else {
+          const found = getParentNode(child, targetNode);
+          if (found) {
+            return found;
+          }
+        }
+      }
+    }
+    return null;
+  }
+}

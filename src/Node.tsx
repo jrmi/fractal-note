@@ -81,7 +81,7 @@ export default function Node({
 
   useEffect(() => {
     if (isHovered) {
-      onSelect(path);
+      onSelect(nodeId);
     }
   }, [isHovered, path.join('.')]);
 
