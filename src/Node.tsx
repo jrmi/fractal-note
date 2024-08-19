@@ -70,20 +70,20 @@ export default function Node({
   children = [],
   ...rest
 }) {
-  const { path, onSelect, selectedPath, updateNode, setEdit, edit, moveNode } =
+  const { onSelect, selectedNodeId, updateNode, setEdit, edit, moveNode } =
     rest;
   const contentRef = useRef(null);
   const isHovered = useHover(contentRef);
   const [dragTarget, setDragTarget] = useState(null);
   const hasChildren = children.length > 0;
-  const isSelected = path.join('.') === selectedPath.join('.');
+  const isSelected = nodeId === selectedNodeId;
   const isEdited = isSelected && edit;
 
   useEffect(() => {
     if (isHovered) {
       onSelect(nodeId);
     }
-  }, [isHovered, path.join('.')]);
+  }, [isHovered, nodeId]);
 
   useEffect(() => {
     if (isSelected) {
@@ -95,14 +95,14 @@ export default function Node({
     }
   }, [isSelected]);
 
-  useEffect(() => {
+  /*useEffect(() => {
     if (
       selectedPath.length > path.length &&
       selectedPath.join('.').startsWith(path.join('.'))
     ) {
       updateNode(path, (prevNode) => ({ ...prevNode, open: true }));
     }
-  }, [selectedPath.join('.')]);
+  }, [selectedPath.join('.')]);*/
 
   useKeyboardEvent(
     true,
@@ -113,7 +113,7 @@ export default function Node({
       switch (ev.key) {
         case ' ':
           if (hasChildren) {
-            updateNode(path, (prevNode) => ({
+            updateNode(nodeId, (prevNode) => ({
               ...prevNode,
               open: !prevNode.open,
             }));
@@ -129,14 +129,14 @@ export default function Node({
   );
 
   const handleChange = (newValue) => {
-    updateNode(path, (prevNode) => ({
+    updateNode(nodeId, (prevNode) => ({
       ...prevNode,
       data: newValue,
     }));
   };
 
   const handleDragStart = (ev) => {
-    ev.dataTransfer.setData('text/plain', path.join('.'));
+    ev.dataTransfer.setData('text/plain', nodeId);
   };
 
   const handleDragHover = (ev) => {
@@ -166,20 +166,17 @@ export default function Node({
     if (
       ancestorMatchingPredicate(ev.target, (el) => el === contentRef.current)
     ) {
-      const sourcePath = ev.dataTransfer
-        .getData('text/plain')
-        .split('.')
-        .map((t) => parseInt(t));
+      const sourceNodeId = ev.dataTransfer.getData('text/plain');
       const contentRect = contentRef.current.getBoundingClientRect();
       const x = ev.clientX - contentRect.left;
       const y = ev.clientY - contentRect.top;
       if (x > (contentRect.width / 3) * 2) {
-        moveNode(sourcePath, nodeId, 'addChild');
+        moveNode(sourceNodeId, nodeId, 'addChild');
       } else {
         if (y > contentRect.height / 2) {
-          moveNode(sourcePath, nodeId, 'after');
+          moveNode(sourceNodeId, nodeId, 'after');
         } else {
-          moveNode(sourcePath, nodeId, 'before');
+          moveNode(sourceNodeId, nodeId, 'before');
         }
       }
     }
@@ -189,7 +186,7 @@ export default function Node({
     <StyledNode>
       <StyledNodeContent
         onClick={() =>
-          updateNode(path, (prevNode) => ({
+          updateNode(nodeId, (prevNode) => ({
             ...prevNode,
             open: !prevNode.open,
           }))

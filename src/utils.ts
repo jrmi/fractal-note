@@ -10,32 +10,23 @@ export const ancestorMatchingPredicate = (element, predicate) => {
   return ancestorMatchingPredicate(element.parentNode, predicate);
 };
 
-export const getNodeByPath = (path, node) => {
-  if (path.length === 0) {
-    return node;
-  } else {
-    const [nodeIndex, ...rest] = path;
-    return getNodeByPath(rest, node.children[nodeIndex]);
-  }
-};
+export function mapTree(tree, fn) {
+  const newNode = fn(tree);
 
-export function mapTree(node, fn) {
-  const newNode = fn(node);
-
-  if (node.children) {
-    newNode.children = node.children.map((child) => mapTree(child, fn));
+  if (tree.children) {
+    newNode.children = tree.children.map((child) => mapTree(child, fn));
   }
 
   return newNode;
 }
 
-export function findNode(node, predicate, path = []) {
-  if (predicate(node)) {
-    return [node, path];
+export function findNode(tree, predicate, path = []) {
+  if (predicate(tree)) {
+    return [tree, path];
   }
 
-  if (node.children) {
-    for (let [index, child] of node.children.entries()) {
+  if (tree.children) {
+    for (let [index, child] of tree.children.entries()) {
       const [found, childPath] = findNode(child, predicate, [...path, index]);
       if (found) {
         return [found, childPath];
@@ -46,25 +37,30 @@ export function findNode(node, predicate, path = []) {
   return [null, []];
 }
 
-export function getNodeById(node, nodeId) {
-  return findNode(node, ({ id }) => id === nodeId);
+export function getNodeById(tree, nodeId) {
+  return findNode(tree, ({ id }) => id === nodeId)[0];
 }
 
-export const updateNodeByPath = (node, currentPath, callback) => {
-  const newNode = { ...node };
+export const updateNodeById = (tree, nodeId, callback) => {
+  const path = findNode(tree, ({ id }) => id === nodeId)[1];
+  return updateNodeByPath(tree, path, callback);
+};
+
+export const updateNodeByPath = (tree, currentPath, callback) => {
+  const newNode = { ...tree };
   if (currentPath.length === 0) {
     return callback(newNode);
   } else {
     const [nodeIndex, ...rest] = currentPath;
     newNode.children = newNode.children
-      .map((node, index) => {
+      .map((child, index) => {
         if (nodeIndex === index) {
-          return updateNodeByPath(node, rest, callback);
+          return updateNodeByPath(child, rest, callback);
         } else {
-          return node;
+          return child;
         }
       })
-      .filter((node) => node);
+      .filter((child) => Boolean(child));
     return newNode;
   }
 };
@@ -73,16 +69,16 @@ export const newNode = () => {
   return { data: '', children: [], id: nanoid() };
 };
 
-export function getParentNode(currentNode, targetNode) {
-  if (currentNode.id === targetNode.id) {
-    return currentNode;
+export function getParentNode(tree, childNodeId) {
+  if (tree.id === childNodeId) {
+    return tree;
   } else {
-    if (currentNode.children) {
-      for (let child of currentNode.children) {
-        if (child.id === targetNode.id) {
-          return currentNode;
+    if (tree.children) {
+      for (let child of tree.children) {
+        if (child.id === childNodeId) {
+          return tree;
         } else {
-          const found = getParentNode(child, targetNode);
+          const found = getParentNode(child, childNodeId);
           if (found) {
             return found;
           }
