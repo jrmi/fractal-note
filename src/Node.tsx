@@ -5,6 +5,7 @@ import { useKeyboardEvent } from '@react-hookz/web';
 import Nodes from './Nodes';
 import useHover from './useHover';
 import Editable from './Editable';
+import { generateColors } from './utils';
 
 const StyledNode = styled('div')`
   display: flex;
@@ -22,13 +23,14 @@ const StyledNodeContent = styled('div')`
   user-select: none;
   flex-shrink: 0;
   position: relative;
+  border-left: 8px solid green;
 
   .node__content {
     margin-bottom: 4px;
     position: relative;
-    border-radius: 8px;
+    /* border-radius: 8px; */
     margin-right: 20px;
-    border-left: 1px solid #646464;
+    /* border-left: 1px solid #646464; */
     /* border-right: 1px solid #646464; */
     /* box-shadow: 0 2px 0px rgba(0, 0, 0, 0.08); */
     ${(props) => (props.hasChildren ? 'padding-right: 1.5em;' : '')}
@@ -73,8 +75,15 @@ export default function Node({
   children = [],
   ...rest
 }) {
-  const { onSelect, selectedNodeId, updateNode, setEdit, edit, moveNode } =
-    rest;
+  const {
+    onSelect,
+    selectedNodeId,
+    updateNode,
+    setEdit,
+    edit,
+    moveNode,
+    color,
+  } = rest;
   const contentRef = useRef(null);
   const isHovered = useHover(contentRef);
   const [dragTarget, setDragTarget] = useState(null);
@@ -190,6 +199,8 @@ export default function Node({
     }
   };
 
+  const { intense, pastel } = generateColors(color);
+
   return (
     <StyledNode>
       <StyledNodeContent
@@ -199,6 +210,7 @@ export default function Node({
         opened={open}
         edit={isEdited}
         dragTarget={dragTarget}
+        style={{ borderLeft: `8px solid ${intense}`, backgroundColor: pastel }}
       >
         <div
           class='node__content'

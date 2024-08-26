@@ -10,7 +10,7 @@ const StyledNodes = styled('div')`
   align-items: flex-start;
 `;
 
-export default function Nodes({ nodes, ...rest }) {
+export default function Nodes({ nodes, color = null, ...rest }) {
   const itemRefs = useRef([]);
   const parentRef = useRef(null);
   const [lines, setLines] = useState([]);
@@ -45,10 +45,10 @@ export default function Nodes({ nodes, ...rest }) {
       <StyledNodes>
         {nodes.map((node, index) => (
           <div key={node.id} ref={(el) => (itemRefs.current[index] = el)}>
-            <Node {...node} {...rest} />
+            <Node color={color === null ? index : color} {...node} {...rest} />
           </div>
         ))}
-        <svg
+        {/*<svg
           style={{
             position: 'absolute',
             top: 0,
@@ -67,7 +67,7 @@ export default function Nodes({ nodes, ...rest }) {
               fill='none'
             />
           ))}
-        </svg>
+        </svg>*/}
       </StyledNodes>
     </div>
   );

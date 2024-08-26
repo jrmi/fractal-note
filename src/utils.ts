@@ -100,3 +100,35 @@ export function getPreviousNextNode(tree, nodeId) {
       : parentNode.children[childIndex + 1];
   return [previous, next];
 }
+
+export function generateColors(seedValue) {
+  // Seed the random number generator
+  function seededRandom(seed) {
+    const x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  }
+
+  // Generate random values for RGB components
+  function randomWithSeed(seed) {
+    return Math.floor(seededRandom(seed) * 256); // Full range for intense color
+  }
+
+  // Generate intense color
+  const r = randomWithSeed(seedValue);
+  const g = randomWithSeed(seedValue + 1); // Slightly offset seed for each color component
+  const b = randomWithSeed(seedValue + 2);
+
+  const intenseColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+
+  // Generate pastel color by averaging with white (255, 255, 255)
+  const pastelR = Math.floor((r + 255 * 5) / 6);
+  const pastelG = Math.floor((g + 255 * 5) / 6);
+  const pastelB = Math.floor((b + 255 * 5) / 6);
+
+  const pastelColor = `#${pastelR.toString(16).padStart(2, '0')}${pastelG.toString(16).padStart(2, '0')}${pastelB.toString(16).padStart(2, '0')}`;
+
+  return {
+    intense: intenseColor,
+    pastel: pastelColor,
+  };
+}
