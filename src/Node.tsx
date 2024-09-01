@@ -23,7 +23,7 @@ const StyledNodeContent = styled('div')`
   user-select: none;
   flex-shrink: 0;
   position: relative;
-  border-left: 8px solid green;
+  border-left: 5px solid green;
 
   .node__content {
     margin-bottom: 4px;
@@ -210,7 +210,7 @@ export default function Node({
         opened={open}
         edit={isEdited}
         dragTarget={dragTarget}
-        style={{ borderLeft: `8px solid ${intense}`, backgroundColor: pastel }}
+        style={{ borderLeft: `5px solid ${intense}`, backgroundColor: pastel }}
       >
         <div
           class='node__content'

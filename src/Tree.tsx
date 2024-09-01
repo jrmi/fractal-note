@@ -1,5 +1,5 @@
-import { useCallback, useState, useMemo } from 'preact/hooks';
-import { useKeyboardEvent } from '@react-hookz/web';
+import { useCallback, useState, useMemo, useEffect } from 'preact/hooks';
+import { useKeyboardEvent, useMountEffect } from '@react-hookz/web';
 import { nanoid } from 'nanoid';
 
 import Nodes from './Nodes';
@@ -12,12 +12,12 @@ import {
   getPreviousNextNode,
 } from './utils';
 
-export default function Tree({ nodes: initialNodes }) {
+export default function Tree({ nodes, onChange: setNodes }) {
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [edit, setEdit] = useState(false);
-  const [nodes, setNodes] = useState(() => {
-    const result = JSON.parse(JSON.stringify(initialNodes));
-    return mapTree(result[0], (node) => ({ ...node, id: nanoid() }));
+
+  useMountEffect(() => {
+    setNodes(mapTree(nodes, (node) => ({ id: nanoid(), ...node })));
   });
 
   const selectedNode = useMemo(
