@@ -65,10 +65,6 @@ export const updateNodeByPath = (tree, currentPath, callback) => {
   }
 };
 
-export const newNode = () => {
-  return { data: '', children: [], id: nanoid() };
-};
-
 export function getParentNode(tree, childNodeId) {
   if (tree.id === childNodeId) {
     return tree;
@@ -132,3 +128,12 @@ export function generateColors(seedValue) {
     pastel: pastelColor,
   };
 }
+
+export const newNode = () => {
+  return {
+    data: '',
+    children: [],
+    id: nanoid(),
+    color: Math.random() * 1000000,
+  };
+};

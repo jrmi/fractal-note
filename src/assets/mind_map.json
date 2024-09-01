@@ -1,15 +1,13 @@
-[
-  {
-    "data": "Root",
-    "children": [
-      {
-        "data": "test",
-        "children": [
-          { "data": "First" },
-          { "data": "Second" },
-          { "data": "Third" }
-        ]
-      }
-    ]
-  }
-]
+{
+  "data": "Root",
+  "children": [
+    {
+      "data": "Example",
+      "children": [
+        { "data": "First" },
+        { "data": "Second" },
+        { "data": "Third" }
+      ]
+    }
+  ]
+}

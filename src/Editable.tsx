@@ -20,7 +20,7 @@ const Wrapper = styled('div')`
     min-width: 2em;
     box-shadow: none;
     resize: none;
-    padding: 2px 8px;
+    padding: 4px 6px;
   }
 
   .editable__textarea {

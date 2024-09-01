@@ -26,14 +26,15 @@ const StyledNodeContent = styled('div')`
   border-left: 5px solid green;
 
   .node__content {
-    margin-bottom: 4px;
+    /*margin-bottom: 4px;*/
     position: relative;
     /* border-radius: 8px; */
-    margin-right: 20px;
+    /*padding-right: 20px; */
     /* border-left: 1px solid #646464; */
     /* border-right: 1px solid #646464; */
-    /* box-shadow: 0 2px 0px rgba(0, 0, 0, 0.08); */
-    ${(props) => (props.hasChildren ? 'padding-right: 1.5em;' : '')}
+    /* box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.08); */
+    /* padding: 5px 2px;*/
+    ${(props) => (props.hasChildren ? 'padding-right: 2em;' : '')}
 
     /* background-color: #f3f3f3;*/
     ${(props) => (props.selected ? 'background-color: #c7ff9f;' : '')}
@@ -62,7 +63,7 @@ const StyledNodeContent = styled('div')`
 
     &::before {
       content: ${(props) => (props.opened ? "'[-]'" : "'[+]'")};
-      margin-right: 2px;
+      margin-right: 6px;
       margin-top: -4px;
     }
   }

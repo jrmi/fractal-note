@@ -1,11 +1,12 @@
-import { useLocalStorageValue } from '@react-hookz/web';
+import useLocalStorage from './useLocalstorage';
 import { styled } from 'goober';
 import { Link, Route, Switch } from 'wouter';
-import { useEffect } from 'preact/hooks';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 
 import './app.css';
 import Tree from './Tree';
-import data from './assets/mind_map_complete.json';
+import example from './assets/mind_map.json';
+import fullExample from './assets/mind_map_complete.json';
 
 const Topbar = styled('div')`
   width: 100%;
@@ -15,6 +16,7 @@ const Topbar = styled('div')`
   gap: 10px;
   position: fixed;
   top: 0;
+  left: 0;
   z-index: 1;
   background-color: #ccc;
   height: 40px;
@@ -31,9 +33,7 @@ const StyledMain = styled('div')`
 `;
 
 function WithStorage({ name }) {
-  const { value: names, set: setNames } = useLocalStorageValue('_names', {
-    defaultValue: [],
-  });
+  const [names, setNames] = useLocalStorage('_names', []);
 
   const currentNotes = names?.find(({ name: noteName }) => noteName === name);
 
@@ -43,9 +43,7 @@ function WithStorage({ name }) {
     }
   }, [currentNotes, name]);
 
-  useEffect(() => {}, [name]);
-
-  const { value, set } = useLocalStorageValue(name, { defaultValue: data[0] });
+  const [value, set] = useLocalStorage(name, example);
 
   return (
     <StyledMain>
@@ -55,7 +53,7 @@ function WithStorage({ name }) {
 }
 
 function Menu() {
-  const { value: names } = useLocalStorageValue('_names', { defaultValue: [] });
+  const [names] = useLocalStorage('_names', []);
   return (
     <Topbar>
       {names?.map(({ name }) => <Link href={`/note/${name}`}>{name}</Link>)}

@@ -45,7 +45,11 @@ export default function Nodes({ nodes, color = null, ...rest }) {
       <StyledNodes>
         {nodes.map((node, index) => (
           <div key={node.id} ref={(el) => (itemRefs.current[index] = el)}>
-            <Node color={color === null ? index : color} {...node} {...rest} />
+            <Node
+              {...node}
+              {...rest}
+              color={color === null ? node.color : color}
+            />
           </div>
         ))}
         {/*<svg

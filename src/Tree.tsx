@@ -17,7 +17,13 @@ export default function Tree({ nodes, onChange: setNodes }) {
   const [edit, setEdit] = useState(false);
 
   useMountEffect(() => {
-    setNodes(mapTree(nodes, (node) => ({ id: nanoid(), ...node })));
+    setNodes(
+      mapTree(nodes, (node) => ({
+        id: nanoid(),
+        color: Math.random() * 1000000,
+        ...node,
+      }))
+    );
   });
 
   const selectedNode = useMemo(
@@ -55,6 +61,7 @@ export default function Tree({ nodes, onChange: setNodes }) {
   const insertNodeAfter = useCallback((targetNodeId, nodeToInsert) => {
     setNodes((prevTree) => {
       const parentNode = getParentNode(prevTree, targetNodeId);
+
       const insertionIndex = parentNode.children.findIndex(
         ({ id }) => id === targetNodeId
       );
@@ -254,6 +261,9 @@ export default function Tree({ nodes, onChange: setNodes }) {
           break;
 
         case 'Delete':
+          if (parentNode === nodes && nodes.children.length <= 1) {
+            return;
+          }
           currentlySelectedIndex = parentNode.children.findIndex(
             ({ id }) => id === selectedNodeId
           );
